@@ -10,7 +10,7 @@
 
 [![Featured on PaperWeekly](https://img.shields.io/badge/Featured%20on-PaperWeekly-red?style=flat)](https://mp.weixin.qq.com/s/tDniVryVGjDkkkWl-5sTkQ) · [![Featured in awesome-agent-skills](https://img.shields.io/badge/Featured%20in-awesome--agent--skills-blue?style=flat&logo=github)](https://github.com/VoltAgent/awesome-agent-skills) · [![AI Digital Crew - Project of the Day](https://img.shields.io/badge/AI%20Digital%20Crew-Project%20of%20the%20Day%20(2026.03.14)-orange?style=flat)](https://aidigitalcrew.com) · [💬 Join Community](#-community)
 
-Custom [Claude Code](https://docs.anthropic.com/en/docs/claude-code) skills for autonomous ML research workflows. These skills orchestrate **cross-model collaboration** — Claude Code drives the research while an external LLM (via [Codex MCP](https://github.com/openai/codex)) acts as a critical reviewer. 🔀 **Also supports [alternative model combinations](#-alternative-model-combinations) (GLM, Kimi, LongCat, DeepSeek, MiniMax, etc.) — no Claude or OpenAI API required.**
+Custom [Claude Code](https://docs.anthropic.com/en/docs/claude-code) skills for autonomous ML research workflows. These skills orchestrate **cross-model collaboration** — Claude Code drives the research while an external LLM (via [Codex MCP](https://github.com/openai/codex)) acts as a critical reviewer. 🔀 **Also supports [alternative model combinations](#-alternative-model-combinations) (GLM, MiniMax, Kimi, LongCat, DeepSeek, etc.) — no Claude or OpenAI API required.**
 
 > 💭 **Why not self-play with a single model?** Using Claude Code subagents or agent teams for both execution and review is technically possible, but tends to fall into **local minima** — the same model reviewing its own patterns creates blind spots.
 >
@@ -22,7 +22,7 @@ Custom [Claude Code](https://docs.anthropic.com/en/docs/claude-code) skills for 
 
 ## 📢 What's New
 
-- **2026-03-15** — 🔀 **Bring your own model!** [Any OpenAI-compatible API](#-alternative-model-combinations) now works as reviewer via [`llm-chat`](mcp-servers/llm-chat/) MCP server. GLM, Kimi, LongCat, DeepSeek, MiniMax all tested — **zero Claude or OpenAI API needed**
+- **2026-03-15** — 🔀 **Bring your own model!** [Any OpenAI-compatible API](#-alternative-model-combinations) now works as reviewer via [`llm-chat`](mcp-servers/llm-chat/) MCP server. GLM, MiniMax, Kimi, LongCat, DeepSeek all tested — **zero Claude or OpenAI API needed**
 - **2026-03-14** — 📱 [Feishu/Lark integration](#-feishulark-integration-optional): three modes (off/push/interactive), mobile notifications for experiments, reviews, and checkpoints
 - **2026-03-13** — 🛑 Human-in-the-loop: configurable `AUTO_PROCEED` checkpoints across all workflows. Full autopilot or step-by-step approval
 - **2026-03-12** — 🔗 [Zotero](#-zotero-integration-optional) + [Obsidian](#-obsidian-integration-optional) + local PDFs + arXiv/Scholar: multi-source literature search with cross-model novelty verification

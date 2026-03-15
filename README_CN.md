@@ -10,7 +10,7 @@
 
 [![PaperWeekly 收录](https://img.shields.io/badge/PaperWeekly-收录-red?style=flat)](https://mp.weixin.qq.com/s/tDniVryVGjDkkkWl-5sTkQ) · [![Featured in awesome-agent-skills](https://img.shields.io/badge/Featured%20in-awesome--agent--skills-blue?style=flat&logo=github)](https://github.com/VoltAgent/awesome-agent-skills) · [![AI Digital Crew - Project of the Day](https://img.shields.io/badge/AI%20Digital%20Crew-Project%20of%20the%20Day%20(2026.03.14)-orange?style=flat)](https://aidigitalcrew.com) · [💬 加入交流群](#-交流群)
 
-基于 [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 的自定义 Skills，用于自主 ML 科研工作流。核心机制是**跨模型协作**——Claude Code 负责执行（读文件、写代码、跑实验、收结果），外部 LLM（通过 [Codex MCP](https://github.com/openai/codex)）负责评审（打分、找弱点、建议修复）。两个模型互不评自己的作业，形成真正的反馈循环。🔀 **也支持[替代模型组合](#-替代模型组合)（GLM、Kimi、LongCat、DeepSeek、MiniMax 等）——无需 Claude 或 OpenAI API。**
+基于 [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 的自定义 Skills，用于自主 ML 科研工作流。核心机制是**跨模型协作**——Claude Code 负责执行（读文件、写代码、跑实验、收结果），外部 LLM（通过 [Codex MCP](https://github.com/openai/codex)）负责评审（打分、找弱点、建议修复）。两个模型互不评自己的作业，形成真正的反馈循环。🔀 **也支持[替代模型组合](#-替代模型组合)（GLM、MiniMax、Kimi、LongCat、DeepSeek 等）——无需 Claude 或 OpenAI API。**
 
 > 💭 **为什么不用单模型自我博弈？** 用 Claude Code 的 subagent 或 agent team 同时做执行和审稿在技术上可行，但容易陷入**局部最优**——同一个模型审自己的输出会产生盲区。
 >
@@ -22,7 +22,7 @@
 
 ## 📢 最近更新
 
-- **2026-03-15** — 🔀 **自带模型！** [任意 OpenAI 兼容 API](#-替代模型组合) 均可作为审查器，通过 [`llm-chat`](mcp-servers/llm-chat/) MCP 服务器。GLM、Kimi、LongCat、DeepSeek、MiniMax 已全部测试——**完全不需要 Claude 或 OpenAI API**
+- **2026-03-15** — 🔀 **自带模型！** [任意 OpenAI 兼容 API](#-替代模型组合) 均可作为审查器，通过 [`llm-chat`](mcp-servers/llm-chat/) MCP 服务器。GLM、MiniMax、Kimi、LongCat、DeepSeek 已全部测试——**完全不需要 Claude 或 OpenAI API**
 - **2026-03-14** — 📱 [飞书集成](#-飞书lark-集成可选)：三种模式（关闭/推送/交互），实验完成、review 出分、checkpoint 审批均可手机收通知
 - **2026-03-13** — 🛑 Human-in-the-loop：所有工作流支持 `AUTO_PROCEED` 检查点，全自动或逐步审批
 - **2026-03-12** — 🔗 [Zotero](#-zotero-集成可选) + [Obsidian](#-obsidian-集成可选) + 本地 PDF + arXiv/Scholar：多源文献检索 + 跨模型新颖性验证
