@@ -1,0 +1,14 @@
+{
+  "last_updated": "2026-03-18T23:20:00",
+  "preferences": [
+    "For overnight training monitors, pair the heartbeat subagent with a simpler host-side fallback when the job is important enough that a stalled monitor is unacceptable."
+  ],
+  "fixes": [
+    "Do not define the stop condition from cache thresholds or controller activity alone; require real training progress such as step advancement, metrics.csv creation, checkpoint creation, or validation markers from the target run log.",
+    "For shared Volc controller workflows, the monitor should treat repeated controller misses conservatively and avoid auto-submitting duplicate controller tasks after a single failed status check."
+  ],
+  "contexts": [
+    "dev-intern-02 heartbeat monitoring for Volc controller jobs and overnight mesh VAE training"
+  ],
+  "custom_prompts": "When building a heartbeat prompt for overnight training, define the stop condition around concrete evidence from the target run log or outputs, not around upstream cache preparation or controller liveness alone."
+}

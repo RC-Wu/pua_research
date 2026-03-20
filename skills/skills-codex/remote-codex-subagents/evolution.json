@@ -1,0 +1,16 @@
+{
+  "last_updated": "2026-03-18T20:42:06.234677",
+  "preferences": [
+    "For forwarding-machine tasks, separate controller validation from real training launch: first prove queue->done on a tiny smoke, then enqueue the heavier training wave."
+  ],
+  "fixes": [
+    "When launching dev-intern-02 remote Codex workers, explicitly say to use find/grep/sed and not assume rg or git metadata are available in the remote workspace copy.",
+    "If ML Platform container-log APIs are permission-blocked, validate the forwarding-machine controller by queueing a tiny smoke job and inspecting jobs/done/*.result.json plus logs/jobs/*.log instead of relying on volc ml_task logs.",
+    "When several workers share one Volc controller queue, inspect controller_state.json first and neutralize conflicting readiness probes instead of blindly submitting overlapping launch jobs.",
+    "If a Volc controller resubmit fails with an upload size or file-count limit, create a tiny UserCodePath submit directory and keep Entrypoint on the absolute vePFS path instead of submitting from the full live sandbox."
+  ],
+  "contexts": [
+    "dev-intern-02 remote Codex orchestration and Volc forwarding-machine controller workflows"
+  ],
+  "custom_prompts": "When launching remote Codex workers on dev-intern-02, say explicitly that rg may be unavailable and the repo mirror may not be a git root; tell the worker to use find/grep/sed fallbacks and to inspect shared queue/controller state before submitting launch jobs."
+}

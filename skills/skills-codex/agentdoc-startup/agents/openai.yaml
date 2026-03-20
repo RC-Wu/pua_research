@@ -1,0 +1,4 @@
+interface:
+  display_name: "AgentDoc Startup"
+  short_description: "Load Prompt.md and start an AgentDoc-governed task on PC or dev-intern-01/02."
+  default_prompt: "使用skill启动AgentDoc"

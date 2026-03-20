@@ -1,0 +1,142 @@
+{
+  "routing": {
+    "mode": "current-task-locked",
+    "pinProfileId": "current-session",
+    "allowMultiAccount": true,
+    "difficultyTierMap": {
+      "low": "quick",
+      "medium": "balanced",
+      "high": "deep"
+    },
+    "taskKindTierMap": {
+      "research": "deep",
+      "builder": "deep",
+      "monitor": "balanced",
+      "summary": "quick",
+      "review": "balanced"
+    }
+  },
+  "profiles": [
+    {
+      "id": "current-session",
+      "label": "Current Session",
+      "enabled": true,
+      "allowSelection": false,
+      "routingWeight": 1.0,
+      "machineIds": [
+        "pc",
+        "dev-intern-02"
+      ],
+      "credit": {
+        "remaining": 1.0,
+        "reserveFloor": 0.1
+      },
+      "health": {
+        "available": true,
+        "verified": true,
+        "accountKey": "acct-current",
+        "issues": []
+      },
+      "modelTiers": {
+        "quick": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "medium",
+          "search": false,
+          "browserMode": "none"
+        },
+        "balanced": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "high",
+          "search": true,
+          "browserMode": "codex-search"
+        },
+        "deep": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "xhigh",
+          "search": true,
+          "browserMode": "codex-search"
+        }
+      }
+    },
+    {
+      "id": "dev02-slot-2",
+      "label": "dev02 Slot 2",
+      "enabled": true,
+      "allowSelection": true,
+      "routingWeight": 0.8,
+      "machineIds": [
+        "dev-intern-02"
+      ],
+      "credit": {
+        "remaining": 0.6,
+        "reserveFloor": 0.1
+      },
+      "health": {
+        "available": true,
+        "verified": true,
+        "accountKey": "acct-dev02-slot-2",
+        "issues": []
+      },
+      "modelTiers": {
+        "quick": {
+          "model": "gpt-5.4-mini",
+          "reasoningEffort": "low",
+          "search": false,
+          "browserMode": "none"
+        },
+        "balanced": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "medium",
+          "search": true,
+          "browserMode": "codex-search"
+        },
+        "deep": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "high",
+          "search": true,
+          "browserMode": "codex-search"
+        }
+      }
+    },
+    {
+      "id": "pc-slot-2",
+      "label": "PC Slot 2",
+      "enabled": true,
+      "allowSelection": true,
+      "routingWeight": 0.7,
+      "machineIds": [
+        "pc"
+      ],
+      "credit": {
+        "remaining": 0.05,
+        "reserveFloor": 0.1
+      },
+      "health": {
+        "available": true,
+        "verified": true,
+        "accountKey": "acct-pc-slot-2",
+        "issues": []
+      },
+      "modelTiers": {
+        "quick": {
+          "model": "gpt-5.4-mini",
+          "reasoningEffort": "low",
+          "search": false,
+          "browserMode": "none"
+        },
+        "balanced": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "medium",
+          "search": true,
+          "browserMode": "codex-search"
+        },
+        "deep": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "high",
+          "search": true,
+          "browserMode": "codex-search"
+        }
+      }
+    }
+  ]
+}

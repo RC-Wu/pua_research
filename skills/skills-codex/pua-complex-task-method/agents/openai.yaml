@@ -1,0 +1,4 @@
+interface:
+  display_name: "PUA Complex Tasks"
+  short_description: "Mandatory high-agency execution discipline for complex tasks."
+  default_prompt: "Use this skill before handling any complex coding, research, debugging, or policy task."

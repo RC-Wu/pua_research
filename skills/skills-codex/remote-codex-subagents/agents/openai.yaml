@@ -1,0 +1,4 @@
+interface:
+  display_name: "Remote Codex Subagents"
+  short_description: "Launch and monitor remote codex-cli workers over SSH."
+  default_prompt: "Use this skill to launch or monitor remote codex subagents on dev-intern-02."
