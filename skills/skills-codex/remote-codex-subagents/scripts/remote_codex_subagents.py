@@ -144,6 +144,29 @@ def effective_sandbox(args: argparse.Namespace) -> str:
     return args.sandbox
 
 
+def build_provider_override_flags(args: argparse.Namespace) -> list[str]:
+    if not args.provider_name or not args.provider_base_url:
+        return []
+
+    provider_name = args.provider_name.strip()
+    display_name = (args.provider_display_name or provider_name).strip()
+    requires_openai_auth = "true" if args.provider_requires_openai_auth else "false"
+    return [
+        "-c",
+        f"model_provider={json.dumps(provider_name)}",
+        "-c",
+        f"model_providers.{provider_name}.name={json.dumps(display_name)}",
+        "-c",
+        f"model_providers.{provider_name}.base_url={json.dumps(args.provider_base_url)}",
+        "-c",
+        f"model_providers.{provider_name}.wire_api={json.dumps(args.provider_wire_api)}",
+        "-c",
+        f"model_providers.{provider_name}.env_key={json.dumps(args.provider_env_key)}",
+        "-c",
+        f"model_providers.{provider_name}.requires_openai_auth={requires_openai_auth}",
+    ]
+
+
 def build_remote_proxy_helper(args: argparse.Namespace) -> str:
     return textwrap.dedent(
         f"""\
@@ -333,6 +356,9 @@ def launch(args: argparse.Namespace) -> int:
     launch_json = f"{agent_root}/launch.json"
     stdout_log = f"{agent_root}/stdout.log"
     last_message = f"{agent_root}/last_message.txt"
+    codex_home = str(PurePosixPath(args.remote_home) / ".codex")
+
+    ssh(args.host, f"mkdir -p {shlex.quote(args.remote_home)} {shlex.quote(codex_home)}")
 
     write_remote_text(args.host, prompt_path, prompt)
     launch_payload = {
@@ -349,6 +375,8 @@ def launch(args: argparse.Namespace) -> int:
         "stdout_log": stdout_log,
         "last_message": last_message,
         "status_path": status_path,
+        "provider_name": args.provider_name,
+        "provider_base_url": args.provider_base_url,
     }
     write_remote_text(args.host, launch_json, json.dumps(launch_payload, ensure_ascii=False, indent=2) + "\n")
 
@@ -365,6 +393,7 @@ def launch(args: argparse.Namespace) -> int:
         args.cwd,
         "-",
     ]
+    provider_override_flags = build_provider_override_flags(args)
     if args.model:
         exec_flags = ["--model", args.model, *exec_flags]
     prefix_flags: list[str] = []
@@ -387,11 +416,14 @@ def launch(args: argparse.Namespace) -> int:
         exec_flags = ["--add-dir", add_dir, *exec_flags]
     exec_args = " ".join(shlex.quote(flag) for flag in exec_flags)
     prefix_args = " ".join(shlex.quote(flag) for flag in prefix_flags)
+    provider_args = " ".join(shlex.quote(flag) for flag in provider_override_flags)
     env_setup = "\n".join(env_setup_lines)
 
-    codex_home = str(PurePosixPath(args.remote_home) / ".codex")
-
     api_key_file = str(PurePosixPath(codex_home) / "aris_primary_api_key.txt")
+    route_key_files = list(dict.fromkeys(path.strip() for path in (args.api_key_file or []) if path.strip()))
+    if not route_key_files:
+        route_key_files = [api_key_file]
+    route_key_files_shell = "\n".join(f"  {shlex.quote(path)}" for path in route_key_files)
 
     wrapper = f"""#!/usr/bin/env bash
 set -euo pipefail
@@ -404,6 +436,9 @@ STATUS_PATH={shlex.quote(status_path)}
 LAST_MESSAGE={shlex.quote(last_message)}
 CODEX_HOME_PATH={shlex.quote(codex_home)}
 API_KEY_FILE={shlex.quote(api_key_file)}
+API_KEY_FILES=(
+{route_key_files_shell}
+)
 START_TS="$(date -Is)"
 python3 - <<'PY' > "$STATUS_PATH"
 import json
@@ -413,21 +448,60 @@ print(json.dumps({{
   "agent_name": {json.dumps(args.agent_name)},
   "cwd": {json.dumps(args.cwd)},
   "sandbox_requested": {json.dumps(args.sandbox)},
-  "sandbox_effective": {json.dumps(effective_sandbox(args))}
+  "sandbox_effective": {json.dumps(effective_sandbox(args))},
+  "provider_name": {json.dumps(args.provider_name)},
+  "provider_base_url": {json.dumps(args.provider_base_url)},
+  "route_api_key_files": {json.dumps(route_key_files)}
 }}, ensure_ascii=False, indent=2))
 PY
 cp "$BIN_STORE" "$TMP_BIN"
 chmod +x "$TMP_BIN"
 {env_setup}
-if [ -z "${{OPENAI_API_KEY:-}}" ] && [ -f "$API_KEY_FILE" ]; then
-  export OPENAI_API_KEY="$(tr -d '\r\n' < "$API_KEY_FILE")"
-fi
-set +e
-HOME={shlex.quote(args.remote_home)} CODEX_HOME="$CODEX_HOME_PATH" "$TMP_BIN" {prefix_args} exec {exec_args} < "$PROMPT_PATH" > "$STDOUT_LOG" 2>&1
-RC=$?
-set -e
+route_key_count="${{#API_KEY_FILES[@]}}"
+route_index=0
+route_attempts=0
+route_key_file=""
+should_rotate_route() {{
+  grep -Eqi 'unexpected status 401|unexpected status 403|unexpected status 429|missing bearer|invalid api key|insufficient[_ -]?quota|quota|rate limit|authentication|missing environment variable:.*openai_api_key|未提供令牌' "$STDOUT_LOG"
+}}
+while true; do
+  route_attempts=$((route_attempts + 1))
+  if [ "$route_key_count" -gt 0 ]; then
+    route_key_file="${{API_KEY_FILES[$route_index]}}"
+  else
+    route_key_file="$API_KEY_FILE"
+  fi
+  if [ -f "$route_key_file" ]; then
+    export OPENAI_API_KEY="$(tr -d '\\r\\n' < "$route_key_file")"
+  elif [ -z "${{OPENAI_API_KEY:-}}" ] && [ -f "$API_KEY_FILE" ]; then
+    route_key_file="$API_KEY_FILE"
+    export OPENAI_API_KEY="$(tr -d '\\r\\n' < "$API_KEY_FILE")"
+  else
+    unset OPENAI_API_KEY || true
+  fi
+  printf '===== %s route_attempt=%s route_index=%s key_file=%s =====\\n' "$(date -Is)" "$route_attempts" "$route_index" "$route_key_file" >> "$STDOUT_LOG"
+  set +e
+  HOME={shlex.quote(args.remote_home)} CODEX_HOME="$CODEX_HOME_PATH" "$TMP_BIN" {provider_args} {prefix_args} exec {exec_args} < "$PROMPT_PATH" >> "$STDOUT_LOG" 2>&1
+  RC=$?
+  set -e
+  printf '===== %s route_attempt_done rc=%s route_index=%s key_file=%s =====\\n' "$(date -Is)" "$RC" "$route_index" "$route_key_file" >> "$STDOUT_LOG"
+  if [ "$RC" -eq 0 ]; then
+    break
+  fi
+  if [ "$route_key_count" -le 1 ]; then
+    break
+  fi
+  if ! should_rotate_route; then
+    break
+  fi
+  if [ "$route_attempts" -ge "$route_key_count" ]; then
+    break
+  fi
+  route_index=$((route_index + 1))
+  sleep 5
+done
 END_TS="$(date -Is)"
-python3 - <<'PY' "$STATUS_PATH" "$RC" "$START_TS" "$END_TS"
+python3 - <<'PY' "$STATUS_PATH" "$RC" "$START_TS" "$END_TS" "$route_attempts" "$route_index" "$route_key_file"
 import json, pathlib, sys
 path = pathlib.Path(sys.argv[1])
 payload = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {{}}
@@ -435,6 +509,9 @@ payload["state"] = "finished"
 payload["returncode"] = int(sys.argv[2])
 payload["started_at_real"] = sys.argv[3]
 payload["finished_at_real"] = sys.argv[4]
+payload["route_attempts"] = int(sys.argv[5])
+payload["route_index_final"] = int(sys.argv[6])
+payload["route_key_file_final"] = sys.argv[7]
 path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
 PY
 rm -f "$TMP_BIN"
@@ -456,6 +533,9 @@ exit "$RC"
         "status_path": status_path,
         "sandbox_requested": args.sandbox,
         "sandbox_effective": effective_sandbox(args),
+        "provider_name": args.provider_name,
+        "provider_base_url": args.provider_base_url,
+        "route_api_key_files": route_key_files,
     }
     if proxy_payload is not None:
         payload["proxy"] = proxy_payload
@@ -528,6 +608,13 @@ def build_parser() -> argparse.ArgumentParser:
     common.add_argument("--ensure-dev02-proxy", dest="ensure_dev02_proxy", action="store_true", default=None)
     common.add_argument("--no-ensure-dev02-proxy", dest="ensure_dev02_proxy", action="store_false")
     common.add_argument("--no-auto-dev02-sandbox-fix", action="store_true")
+    common.add_argument("--provider-name", default="")
+    common.add_argument("--provider-display-name", default="")
+    common.add_argument("--provider-base-url", default="")
+    common.add_argument("--provider-wire-api", default="responses")
+    common.add_argument("--provider-env-key", default="OPENAI_API_KEY")
+    common.add_argument("--provider-requires-openai-auth", action="store_true")
+    common.add_argument("--api-key-file", action="append", default=[])
 
     p_install = sub.add_parser("install", parents=[common])
     p_install.set_defaults(func=install)
