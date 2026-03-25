@@ -1,0 +1,185 @@
+{
+  "routing": {
+    "mode": "current-task-locked",
+    "pinProfileId": "openai-primary",
+    "allowMultiAccount": true,
+    "difficultyTierMap": {
+      "low": "quick",
+      "medium": "balanced",
+      "high": "deep"
+    },
+    "taskKindTierMap": {
+      "research": "deep",
+      "builder": "deep",
+      "monitor": "balanced",
+      "summary": "quick",
+      "review": "balanced"
+    }
+  },
+  "tierDefaults": {
+    "quick": {
+      "search": false,
+      "browserMode": "none"
+    },
+    "balanced": {
+      "search": true,
+      "browserMode": "codex-search"
+    },
+    "deep": {
+      "search": true,
+      "browserMode": "codex-search"
+    }
+  },
+  "providers": [
+    {
+      "id": "openai-primary",
+      "label": "OpenAI Primary",
+      "enabled": true,
+      "allowSelection": false,
+      "routingWeight": 1.0,
+      "machineIds": [
+        "pc",
+        "dev-intern-02"
+      ],
+      "credit": {
+        "remaining": 1.0,
+        "reserveFloor": 0.15
+      },
+      "health": {
+        "available": true,
+        "verified": true,
+        "issues": []
+      },
+      "provider": {
+        "name": "openai",
+        "displayName": "OpenAI",
+        "baseUrl": "https://api.openai.com/v1",
+        "wireApi": "responses",
+        "requiresOpenaiAuth": false
+      },
+      "credentials": {
+        "envKey": "OPENAI_API_KEY",
+        "keyFile": "~/.codex/auth/openai-primary.key",
+        "accountKey": "acct-openai-primary"
+      },
+      "tierOverrides": {
+        "quick": {
+          "model": "gpt-5.4-mini",
+          "reasoningEffort": "low"
+        },
+        "balanced": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "high"
+        },
+        "deep": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "xhigh"
+        }
+      }
+    },
+    {
+      "id": "catfish-gateway",
+      "label": "Catfish Gateway",
+      "enabled": true,
+      "allowSelection": true,
+      "routingWeight": 0.85,
+      "machineIds": [
+        "dev-intern-02"
+      ],
+      "credit": {
+        "remaining": 0.7,
+        "reserveFloor": 0.15
+      },
+      "health": {
+        "available": true,
+        "verified": true,
+        "issues": []
+      },
+      "provider": {
+        "name": "catfish_gateway",
+        "displayName": "Catfish Gateway",
+        "baseUrl": "https://gateway.catfish.example.com/v1",
+        "wireApi": "responses",
+        "requiresOpenaiAuth": false
+      },
+      "credentials": {
+        "envKey": "CATFISH_GATEWAY_API_KEY",
+        "keyFile": "~/.codex/auth/catfish-gateway.key",
+        "accountKey": "acct-catfish-gateway"
+      },
+      "modelTiers": {
+        "quick": {
+          "model": "gpt-5.4-mini",
+          "reasoningEffort": "low",
+          "search": false,
+          "browserMode": "none"
+        },
+        "balanced": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "medium",
+          "search": true,
+          "browserMode": "codex-search"
+        },
+        "deep": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "high",
+          "search": true,
+          "browserMode": "codex-search"
+        }
+      }
+    },
+    {
+      "id": "rate-limited-backup",
+      "label": "Rate Limited Backup",
+      "enabled": true,
+      "allowSelection": true,
+      "routingWeight": 0.8,
+      "machineIds": [
+        "dev-intern-02"
+      ],
+      "credit": {
+        "remaining": 0.6,
+        "reserveFloor": 0.15
+      },
+      "health": {
+        "available": false,
+        "verified": true,
+        "issues": [
+          "quota-exhausted"
+        ]
+      },
+      "provider": {
+        "name": "catfish_backup",
+        "displayName": "Catfish Backup",
+        "baseUrl": "https://backup.catfish.example.com/v1",
+        "wireApi": "responses",
+        "requiresOpenaiAuth": false
+      },
+      "credentials": {
+        "envKey": "CATFISH_BACKUP_API_KEY",
+        "keyFile": "~/.codex/auth/catfish-backup.key",
+        "accountKey": "acct-catfish-backup"
+      },
+      "modelTiers": {
+        "quick": {
+          "model": "gpt-5.4-mini",
+          "reasoningEffort": "low",
+          "search": false,
+          "browserMode": "none"
+        },
+        "balanced": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "medium",
+          "search": true,
+          "browserMode": "codex-search"
+        },
+        "deep": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "high",
+          "search": true,
+          "browserMode": "codex-search"
+        }
+      }
+    }
+  ]
+}
