@@ -1,0 +1,131 @@
+{
+  "schemaVersion": "catfish.provider-registry.v1",
+  "updatedAt": "2026-03-25T00:00:00Z",
+  "routing": {
+    "mode": "provider-health-capability",
+    "defaultMachineId": "dev-intern-02",
+    "defaultTier": "balanced",
+    "difficultyTierMap": {
+      "low": "quick",
+      "medium": "balanced",
+      "high": "deep"
+    },
+    "taskCategoryTierMap": {
+      "research": "deep",
+      "builder": "deep",
+      "monitor": "balanced",
+      "summary": "quick",
+      "review": "balanced"
+    },
+    "reasoningLengthByTier": {
+      "quick": "short",
+      "balanced": "medium",
+      "deep": "long"
+    },
+    "parentScoreThresholds": {
+      "explore": 0.35,
+      "promote": 0.7
+    }
+  },
+  "providers": [
+    {
+      "id": "ucloud-modelverse",
+      "providerName": "ucloud",
+      "displayName": "UCloud / Modelverse",
+      "enabled": true,
+      "routingWeight": 1.0,
+      "machineIds": [
+        "dev-intern-02",
+        "pc"
+      ],
+      "baseUrlEnv": "CATFISH_PROVIDER_UCLOUD_BASE_URL",
+      "baseUrl": "https://ucloud-modelverse.example.invalid/v1",
+      "wireApi": "responses",
+      "envKey": "OPENAI_API_KEY",
+      "requiresOpenAIAuth": false,
+      "modelTiers": {
+        "quick": {
+          "model": "gpt-5.3-codex",
+          "reasoningEffort": "medium",
+          "verified": true
+        },
+        "balanced": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "high",
+          "verified": true
+        },
+        "deep": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "xhigh",
+          "verified": true
+        }
+      }
+    },
+    {
+      "id": "smartaipro",
+      "providerName": "smartaipro",
+      "displayName": "SmartAIPro",
+      "enabled": true,
+      "routingWeight": 0.7,
+      "machineIds": [
+        "dev-intern-02",
+        "pc"
+      ],
+      "baseUrlEnv": "CATFISH_PROVIDER_SMARTAIPRO_BASE_URL",
+      "baseUrl": "https://smartaipro.example.invalid/v1",
+      "wireApi": "responses",
+      "envKey": "OPENAI_API_KEY",
+      "requiresOpenAIAuth": false,
+      "modelTiers": {
+        "quick": {
+          "model": "gpt-5.3-codex",
+          "reasoningEffort": "medium",
+          "verified": false
+        },
+        "balanced": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "high",
+          "verified": false
+        },
+        "deep": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "xhigh",
+          "verified": false
+        }
+      }
+    },
+    {
+      "id": "molus",
+      "providerName": "molus",
+      "displayName": "mol.us.ci",
+      "enabled": true,
+      "routingWeight": 0.65,
+      "machineIds": [
+        "dev-intern-02",
+        "pc"
+      ],
+      "baseUrlEnv": "CATFISH_PROVIDER_MOLUS_BASE_URL",
+      "baseUrl": "https://mol.us.ci/v1",
+      "wireApi": "responses",
+      "envKey": "OPENAI_API_KEY",
+      "requiresOpenAIAuth": false,
+      "modelTiers": {
+        "quick": {
+          "model": "gpt-5.3-codex",
+          "reasoningEffort": "medium",
+          "verified": false
+        },
+        "balanced": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "high",
+          "verified": false
+        },
+        "deep": {
+          "model": "gpt-5.4",
+          "reasoningEffort": "xhigh",
+          "verified": false
+        }
+      }
+    }
+  ]
+}

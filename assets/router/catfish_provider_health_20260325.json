@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "catfish.provider-health.v1",
+  "observedAt": "2026-03-25",
+  "providers": [
+    {
+      "providerId": "ucloud-modelverse",
+      "status": "working",
+      "endpointReachable": true,
+      "quotaState": "healthy",
+      "wireApi": "responses",
+      "verifiedModels": [
+        "gpt-5.4",
+        "gpt-5.3-codex"
+      ],
+      "confidence": 0.98,
+      "notes": [
+        "UCloud / Modelverse is working on 2026-03-25.",
+        "Validated with Responses API for gpt-5.4 and gpt-5.3-codex."
+      ]
+    },
+    {
+      "providerId": "smartaipro",
+      "status": "quota-exhausted",
+      "endpointReachable": true,
+      "quotaState": "exhausted",
+      "wireApi": "responses",
+      "verifiedModels": [],
+      "confidence": 0.9,
+      "notes": [
+        "Endpoint is reachable on 2026-03-25.",
+        "Current routing must block live use because quota is exhausted."
+      ]
+    },
+    {
+      "providerId": "molus",
+      "status": "quota-exhausted",
+      "endpointReachable": true,
+      "quotaState": "exhausted",
+      "wireApi": "responses",
+      "verifiedModels": [],
+      "confidence": 0.9,
+      "notes": [
+        "mol.us.ci is reachable on 2026-03-25.",
+        "Current routing must block live use because quota is exhausted."
+      ]
+    }
+  ]
+}
