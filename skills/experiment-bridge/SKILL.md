@@ -2,7 +2,7 @@
 name: experiment-bridge
 description: "Workflow 1.5: Bridge between idea discovery and auto review. Reads EXPERIMENT_PLAN.md, implements experiment code, deploys to GPU, collects initial results. Use when user says \"实现实验\", \"implement experiments\", \"bridge\", \"从计划到跑实验\", \"deploy the plan\", or has an experiment plan ready to execute."
 argument-hint: [experiment-plan-path-or-topic]
-allowed-tools: Bash(*), Read, Write, Edit, Grep, Glob, Agent, Skill
+allowed-tools: Bash(*), Read, Write, Edit, Grep, Glob, Agent, Skill, mcp__codex__codex, mcp__codex__codex-reply
 ---
 
 # Workflow 1.5: Experiment Bridge
@@ -14,19 +14,22 @@ Implement and deploy experiments from plan: **$ARGUMENTS**
 This skill bridges Workflow 1 (idea discovery + method refinement) and Workflow 2 (auto review loop). It takes the experiment plan and turns it into running experiments with initial results.
 
 ```
-Workflow 1 output:                    This skill:                        Workflow 2 input:
-refine-logs/EXPERIMENT_PLAN.md   →   implement → deploy → collect   →   initial results ready
-refine-logs/EXPERIMENT_TRACKER.md     code        /run-experiment        for /auto-review-loop
+Workflow 1 output:                    This skill:                                    Workflow 2 input:
+refine-logs/EXPERIMENT_PLAN.md   →   implement → GPT-5.4 review → deploy → collect → initial results ready
+refine-logs/EXPERIMENT_TRACKER.md     code        (cross-model)    /run-experiment     for /auto-review-loop
 refine-logs/FINAL_PROPOSAL.md
 ```
 
 ## Constants
 
-- **AUTO_DEPLOY = true** — Automatically deploy experiments after implementation. Set `false` to review code before deploying.
+- **CODE_REVIEW = true** — GPT-5.4 xhigh reviews experiment code before deployment. Catches logic bugs before wasting GPU hours. Set `false` to skip.
+- **AUTO_DEPLOY = true** — Automatically deploy experiments after implementation + review. Set `false` to manually inspect code before deploying.
 - **SANITY_FIRST = true** — Run the sanity-stage experiment first (smallest, fastest) before launching the rest. Catches setup bugs early.
 - **MAX_PARALLEL_RUNS = 4** — Maximum number of experiments to deploy in parallel (limited by available GPUs).
+- **BASE_REPO = false** — GitHub repo URL to use as base codebase. When set, clone the repo first and implement experiments on top of it. When `false` (default), write code from scratch or reuse existing project files.
+- **COMPACT = false** — When `true`, (1) read `IDEA_CANDIDATES.md` instead of full `IDEA_REPORT.md` if available, (2) append experiment results to `EXPERIMENT_LOG.md` after collection.
 
-> Override: `/experiment-bridge "EXPERIMENT_PLAN.md" — auto deploy: false, max parallel: 2`
+> Override: `/experiment-bridge "EXPERIMENT_PLAN.md" — compact: true, base repo: https://github.com/org/project`
 
 ## Inputs
 
@@ -35,7 +38,8 @@ This skill expects one or more of:
 1. **`refine-logs/EXPERIMENT_PLAN.md`** (best) — claim-driven experiment roadmap from `/experiment-plan`
 2. **`refine-logs/EXPERIMENT_TRACKER.md`** — run-by-run execution table
 3. **`refine-logs/FINAL_PROPOSAL.md`** — method description for implementation context
-4. **`IDEA_REPORT.md`** — fallback if refine-logs don't exist
+4. **`IDEA_CANDIDATES.md`** — compact idea summary (preferred when `COMPACT: true`)
+5. **`IDEA_REPORT.md`** — full brainstorm output (fallback)
 
 If none exist, ask the user what experiments to implement.
 
@@ -70,9 +74,16 @@ Proceeding to implementation.
 
 ### Phase 2: Implement Experiment Code
 
+**If `BASE_REPO` is set** — clone the repo first:
+```bash
+git clone <BASE_REPO> base_repo/
+# Read the repo's README, understand its structure, find entry points
+# Implement experiments by modifying/extending this codebase
+```
+
 For each milestone (in order), write the experiment scripts:
 
-1. **Check existing code** — scan the project for existing experiment scripts, model code, data loaders. Reuse as much as possible.
+1. **Check existing code** — scan the project (or cloned `base_repo/`) for existing experiment scripts, model code, data loaders. Reuse as much as possible.
 
 2. **Implement missing pieces:**
    - Training scripts with proper argparse (all hyperparameters configurable)
@@ -90,6 +101,43 @@ For each milestone (in order), write the experiment scripts:
    - Is the random seed fixed and controllable?
    - Are results saved in a parseable format (JSON/CSV)?
    - Does the code match FINAL_PROPOSAL.md's method description?
+
+### Phase 2.5: Cross-Model Code Review (when CODE_REVIEW = true)
+
+**Skip this step if `CODE_REVIEW` is `false`.**
+
+Before deploying, send the experiment code to GPT-5.4 xhigh for review:
+
+```
+mcp__codex__codex:
+  config: {"model_reasoning_effort": "xhigh"}
+  prompt: |
+    Review the following experiment implementation for correctness.
+
+    ## Experiment Plan:
+    [paste key sections from EXPERIMENT_PLAN.md]
+
+    ## Method Description:
+    [paste from FINAL_PROPOSAL.md]
+
+    ## Implementation:
+    [paste the experiment scripts]
+
+    Check for:
+    1. Does the code correctly implement the method described in the proposal?
+    2. Are all hyperparameters from the plan reflected in the code?
+    3. Are there any logic bugs (wrong loss function, incorrect data split, missing eval)?
+    4. Is the evaluation metric computed correctly?
+    5. **CRITICAL: Does evaluation use the dataset's actual ground truth labels — NOT another model's output as ground truth?** This is a common and severe bug.
+    6. Any potential issues (OOM risk, numerical instability, missing seeds)?
+
+    For each issue found, specify: CRITICAL / MAJOR / MINOR and the exact fix.
+```
+
+**On review results:**
+- **No CRITICAL issues** → proceed to Phase 3
+- **CRITICAL issues found** → fix them, then re-submit for review (max 2 rounds)
+- **Codex MCP unavailable** → skip silently, proceed to Phase 3 (graceful degradation)
 
 ### Phase 3: Sanity Check (if SANITY_FIRST = true)
 
@@ -140,8 +188,9 @@ Deploy now? Or review the code first?
 As experiments complete:
 
 1. **Parse output files** (JSON/CSV/logs) for key metrics
-2. **Update `refine-logs/EXPERIMENT_TRACKER.md`** — fill in Status and Notes columns
-3. **Check success criteria** from EXPERIMENT_PLAN.md — did each experiment meet its bar?
+2. **Training quality check** — if W&B data is available (CLAUDE.md has `wandb: true` and `wandb_project`), invoke `/training-check` to detect NaN, loss divergence, plateaus, or overfitting. If W&B is not configured, skip silently.
+3. **Update `refine-logs/EXPERIMENT_TRACKER.md`** — fill in Status and Notes columns
+4. **Check success criteria** from EXPERIMENT_PLAN.md — did each experiment meet its bar?
 4. **Write initial results summary:**
 
 ```markdown
@@ -177,6 +226,34 @@ As experiments complete:
 → /auto-review-loop "[topic]"
 ```
 
+### Phase 5.5: Write Compact Log (when COMPACT = true)
+
+**Skip entirely if `COMPACT` is `false`.**
+
+Append each completed experiment to `EXPERIMENT_LOG.md`:
+
+```markdown
+## [Run ID] — [timestamp]
+- **System**: [method name]
+- **Config**: [key hyperparameters]
+- **Result**: [primary metric = X.XX]
+- **Verdict**: [positive / negative / inconclusive]
+- **Reproduce**: `python train.py --config configs/run_id.yaml --seed 42`
+```
+
+This structured log survives session recovery — downstream skills read it instead of parsing screen output.
+
+### Phase 5.6: Auto Ablation Planning
+
+After main experiments (M2) complete with positive results, invoke `/ablation-planner` to design ablation studies:
+
+- Read the main results and method description
+- Generate a claim-driven ablation plan: which components to remove, what to compare, expected outcomes
+- Append ablation blocks to `refine-logs/EXPERIMENT_PLAN.md` and `refine-logs/EXPERIMENT_TRACKER.md`
+- If main results are negative or inconclusive, skip ablation planning and note in the summary
+
+If `/ablation-planner` is not available, skip silently — the existing EXPERIMENT_PLAN.md ablation blocks (if any) remain unchanged.
+
 ### Phase 6: Handoff
 
 Present final status:
@@ -198,6 +275,7 @@ Ready for Workflow 2:
 ## Key Rules
 
 - **Large file handling**: If the Write tool fails due to file size, immediately retry using Bash (`cat << 'EOF' > file`) to write in chunks. Do NOT ask the user for permission — just do it silently.
+- **CRITICAL — Evaluation must use dataset ground truth.** When writing evaluation scripts, ALWAYS compare model predictions against the dataset's actual ground truth labels/targets — NEVER use another model's output as ground truth. Double-check: (1) ground truth comes from the dataset split, not from a baseline/backbone model, (2) evaluation metrics are computed against the same ground truth for all methods, (3) if the task has official eval scripts, use those.
 - **Follow the plan.** Do not invent experiments not in EXPERIMENT_PLAN.md. If you think something is missing, note it but don't add it.
 - **Sanity first.** Never deploy a full suite without verifying the sanity stage passes.
 - **Reuse existing code.** Scan the project before writing new scripts. Extend, don't duplicate.
