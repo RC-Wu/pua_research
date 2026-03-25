@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "catfish.dispatch-state.v1",
+  "project": {
+    "projectId": "catfish-remote-dispatch",
+    "title": "Catfish Remote Dispatch",
+    "objective": "Bridge Catfish competition stages into remote Codex launch specs.",
+    "workspaceRoot": "/dev_vepfs/rc_wu/repos/pua_research_worktrees_wave3/remote_dispatch",
+    "status": "example",
+    "defaultMachineId": "dev-intern-02",
+    "branchPrefix": "catfish/remote-dispatch",
+    "launchDefaults": {
+      "host": "local",
+      "remoteHome": "/dev_vepfs/rc_wu",
+      "remoteBinaryStore": "/dev_vepfs/rc_wu/bin/codex",
+      "remoteRunRoot": "/dev_vepfs/rc_wu/codex_subagents",
+      "sandbox": "danger-full-access",
+      "approval": "never",
+      "search": true,
+      "skipInstall": true,
+      "addDir": [
+        "/dev_vepfs/rc_wu/repos/pua_research_worktrees_wave3/remote_dispatch"
+      ]
+    },
+    "agentGroups": [
+      {
+        "agentGroupId": "builder",
+        "label": "Builder",
+        "roles": [
+          "worker"
+        ]
+      },
+      {
+        "agentGroupId": "builder-critic",
+        "label": "Builder + Critic",
+        "roles": [
+          "worker",
+          "reviewer"
+        ],
+        "scoreBias": 0.03,
+        "promptPrefix": "Add a short self-critique before the final summary."
+      }
+    ]
+  },
+  "runtime": {
+    "projectId": "catfish-remote-dispatch",
+    "operations": [
+      {
+        "op": "register_project",
+        "project": {
+          "project_id": "catfish-remote-dispatch",
+          "title": "Catfish Remote Dispatch",
+          "objective": "Bridge Catfish competition stages into remote Codex launch specs.",
+          "resource_budget": {
+            "token_budget": 60000,
+            "usd_budget": 20.0,
+            "wall_time_budget_s": 7200.0,
+            "max_parallel_children": 4
+          }
+        }
+      },
+      {
+        "op": "upsert_agent_node",
+        "project_id": "catfish-remote-dispatch",
+        "node": {
+          "node_id": "root-parent",
+          "role": "supervisor",
+          "label": "Root Parent",
+          "status": "active",
+          "resource_budget": {
+            "token_budget": 24000,
+            "max_parallel_children": 4
+          },
+          "metadata": {
+            "workspace_root": "/dev_vepfs/rc_wu/repos/pua_research_worktrees_wave3/remote_dispatch",
+            "bootstrapped_by": "example"
+          }
+        }
+      }
+    ]
+  },
+  "stages": [
+    {
+      "stageId": "impl-wave-1",
+      "competitionId": "comp-impl-wave-1",
+      "parentNodeId": "root-parent",
+      "taskCategory": "builder",
+      "difficulty": "high",
+      "parentScore": 0.84,
+      "candidateCount": 3,
+      "cwd": "/dev_vepfs/rc_wu/repos/pua_research_worktrees_wave3/remote_dispatch",
+      "branchPrefix": "catfish/remote-dispatch/impl-wave-1",
+      "dispatchRunId": "catfish-remote-dispatch-impl-wave-1",
+      "promptText": "Implement the execution bridge from Catfish scheduler/runtime state into remote Codex subagent launch specs. Preserve competitive dispatch and emit runtime-compatible state.",
+      "resourceBudget": {
+        "token_budget": 12000,
+        "usd_budget": 4.0,
+        "wall_time_budget_s": 1800.0
+      }
+    }
+  ]
+}
