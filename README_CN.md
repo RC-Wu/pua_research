@@ -1,4 +1,4 @@
-# Auto-claude-code-research-in-sleep (ARIS ⚔️🌙)
+# CatfishResearch
 
 ![ARIS Logo](docs/aris_logo.svg)
 
@@ -8,17 +8,32 @@
 
 ![分数曲线](docs/auto_review_score_curve.png)
 
-> 🌙 **让 Claude Code 在你睡觉时做科研。** 醒来发现论文已被打分、弱点已被定位、实验已跑完、叙事已重写——全自动。
+> 🌙 **CatfishResearch 保留 ARIS 工作流血统，并把 Catfish Effect 放到台前。** 仓库继续坚持 documentation-first、Codex-friendly，以及对代码改动保持克制。
 >
-> 🪶 **极致轻量——零依赖，零锁定。** 整个系统就是纯 Markdown 文件。没有框架要学、没有数据库要维护、没有 Docker 要配、没有守护进程要看管。每个 skill 就是一个 `SKILL.md`，任何 LLM 都能读懂——换成 [Codex CLI](skills/skills-codex/)、[OpenClaw](docs/OPENCLAW_ADAPTATION.md)、[Cursor](docs/CURSOR_ADAPTATION.md)、[Trae](docs/TRAE_ARIS_RUNBOOK_CN.md)、[Antigravity](docs/ANTIGRAVITY_ADAPTATION_CN.md)、Windsurf 或者你自己的 agent，工作流照样跑。Fork 它、改写它、适配到你的技术栈。
+> 🪶 **Catfish Effect 是架构概念。** 它指向叠加在 upstream ARIS 工作流之上的多项目、父节点打分、provider-aware 编排层。
 >
-> *💡 ARIS 是方法论，不是平台。重要的是科研工作流——带着它去任何地方。🌱*
+> *💡 ARIS 仍然是 upstream 方法论与 provenance；CatfishResearch 是这个 worktree 的整合仓库身份。🌱*
 
 [![PaperWeekly 收录](https://img.shields.io/badge/PaperWeekly-收录-red?style=flat)](https://mp.weixin.qq.com/s/tDniVryVGjDkkkWl-5sTkQ) · [![PaperWeekly — MiniMax-M2.7](https://img.shields.io/badge/PaperWeekly-MiniMax--M2.7-red?style=flat)](https://mp.weixin.qq.com/s/KLFU74lAL2FAIc9K6i1Kqg) · [![Featured in awesome-agent-skills](https://img.shields.io/badge/Featured%20in-awesome--agent--skills-blue?style=flat&logo=github)](https://github.com/VoltAgent/awesome-agent-skills) · [![AI Digital Crew - Project of the Day](https://img.shields.io/badge/AI%20Digital%20Crew-Project%20of%20the%20Day%20(2026.03.14)-orange?style=flat)](https://aidigitalcrew.com) · [💬 加入交流群](#-交流群) · [![引用](https://img.shields.io/badge/📖_引用-BibTeX-green?style=flat)](#-引用)
 
-基于 [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 的自定义 Skills，用于自主 ML 科研工作流。核心机制是**跨模型协作**——Claude Code 负责执行（读文件、写代码、跑实验、收结果），外部 LLM（通过 [Codex MCP](https://github.com/openai/codex)）负责评审（打分、找弱点、建议修复）。两个模型互不评自己的作业，形成真正的反馈循环。🔀 **也支持[替代模型组合](#-替代模型组合)（Kimi、LongCat、DeepSeek 等）——无需 Claude 或 OpenAI API。** 例如 [MiniMax-M2.7 + GLM-5 或 GLM-5 + MiniMax-M2.7](docs/MiniMax-GLM-Configuration.md)。 🤖 **[Codex CLI 原生版](skills/skills-codex/)** — 完整 skill 集合也支持 OpenAI Codex。🖱️ **[Cursor](docs/CURSOR_ADAPTATION.md)** — Cursor 也能用。🖥️ **[Trae](docs/TRAE_ARIS_RUNBOOK_CN.md)** — 字节跳动 AI IDE。🚀 **[Antigravity](docs/ANTIGRAVITY_ADAPTATION_CN.md)** — Google Agent-First IDE。🆓 **[ModelScope 免费接入](docs/MODELSCOPE_GUIDE.md)——零成本，零锁定。**
+CatfishResearch 是这个仓库的 documentation-first 整合身份。它保留 upstream ARIS 主线、`dev-intern-02` 上延续下来的 Codex-first fork 历史，以及当前的 Catfish 基线：ARIS upstream merge 记录、Catfish 架构文档、runtime core、provider routing、control center skeleton、`cc-switch` bridge、remote subagents，以及后续演进用的 roadmap baseline。
 
-> **本分支说明：** 这个 worktree 保留了 upstream ARIS 主线，同时也保留了 `dev-intern-02` 上实际在跑的 Codex-first 增量，基线提交为 `405eaf5`。仓库里同时保留 upstream 的 `skills/` 技能树和本地的 `skills/skills-codex/` 技能树，其中包括 `agentdoc-startup`、`pua-complex-task-method`、`remote-codex-subagents`、`heartbeat-subagent-template`、`final-summary-subagent`、`peer-review`，以及 `tools/codex_route_preview.py` 里的 provider-route 预览工具。
+工作流层仍然是成熟的 ARIS/Codex 科研栈。Claude Code 或 Codex 负责执行，外部 LLM（通过 [Codex MCP](https://github.com/openai/codex)）负责评审，形成真正的跨模型反馈循环。🔀 **也支持[替代模型组合](#-替代模型组合)（Kimi、LongCat、DeepSeek 等）——无需 Claude 或 OpenAI API。** 例如 [MiniMax-M2.7 + GLM-5 或 GLM-5 + MiniMax-M2.7](docs/MiniMax-GLM-Configuration.md)。 🤖 **[Codex CLI 原生版](skills/skills-codex/)** — 完整 skill 集合也支持 OpenAI Codex。🖱️ **[Cursor](docs/CURSOR_ADAPTATION.md)** — Cursor 也能用。🖥️ **[Trae](docs/TRAE_ARIS_RUNBOOK_CN.md)** — 字节跳动 AI IDE。🚀 **[Antigravity](docs/ANTIGRAVITY_ADAPTATION_CN.md)** — Google Agent-First IDE。🆓 **[ModelScope 免费接入](docs/MODELSCOPE_GUIDE.md)——零成本，零锁定。**
+
+> **本分支 provenance 说明：** CatfishResearch 保留 upstream ARIS 主线，同时也保留 `dev-intern-02` 上实际在跑的 Codex-first 增量，基线提交为 `405eaf5`。仓库里同时保留 upstream 的 `skills/` 技能树和本地的 `skills/skills-codex/` 技能树，其中包括 `agentdoc-startup`、`pua-complex-task-method`、`remote-codex-subagents`、`heartbeat-subagent-template`、`final-summary-subagent`、`peer-review`，以及 `tools/codex_route_preview.py` 里的 provider-route 预览工具。
+
+## 🐟 Catfish 文档入口
+
+如果你想先看 CatfishResearch 的架构层和当前整合基线，从这里开始：
+
+- [Catfish 文档索引](docs/catfish/INDEX_20260325.md)
+- [ARIS 合并记录](docs/catfish/MERGE_ARIS_20260325.md)
+- [系统架构](docs/catfish/ARCHITECTURE_20260325.md)
+- [Runtime Engine](docs/catfish/RUNTIME_ENGINE_20260325.md)
+- [Provider Routing](docs/catfish/PROVIDER_ROUTING_20260325.md)
+- [Control Center Skeleton](docs/catfish/CONTROL_CENTER_20260325.md)
+- [CC-switch Bridge](docs/catfish/CC_SWITCH_INTEGRATION_20260325.md)
+- [Roadmap Baseline](docs/catfish/ROADMAP_20260325.md)
 
 > 💭 **为什么不用单模型自我博弈？** 用 Claude Code 的 subagent 或 agent team 同时做执行和审稿在技术上可行，但容易陷入**局部最优**——同一个模型审自己的输出会产生盲区。
 >
@@ -30,19 +45,19 @@
 
 ## 🎯 不止一句 Prompt
 
-**基础模式** — 给 ARIS 一个研究方向，全自动：
+**基础模式** — 给 CatfishResearch 一个研究方向，它会通过保留下来的 ARIS 工作流层自动处理：
 
 ```
 /research-pipeline "离散扩散语言模型的 factorized gap"
 ```
 
-**🔥 精准模式** — 有篇论文想改进？把论文 + 代码给 ARIS：
+**🔥 精准模式** — 有篇论文想改进？把论文 + 代码给 CatfishResearch：
 
 ```
 /research-pipeline "改进方法 X" — ref paper: https://arxiv.org/abs/2406.04329, base repo: https://github.com/org/project
 ```
 
-ARIS 读论文 → 找弱点 → 克隆代码 → 针对*那些*弱点用*那套*代码生成改进方案 → 跑实验 → 写论文。就像跟研究助手说：*"读这篇论文，用这个 repo，找出哪里不行，然后修好它。"*
+CatfishResearch 会调用保留下来的 ARIS 工作流栈：读论文 → 找弱点 → 克隆代码 → 针对*那些*弱点用*那套*代码生成改进方案 → 跑实验 → 写论文。就像跟研究助手说：*"读这篇论文，用这个 repo，找出哪里不行，然后修好它。"*
 
 > 自由组合：`ref paper` 单独 = "这篇论文哪里能改进？"，`base repo` 单独 = "这个代码能做什么？"，两个都给 = "用*这个*代码改进*这篇*论文。"
 

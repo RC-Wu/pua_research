@@ -1,8 +1,8 @@
-# Contributing to Auto-claude-code-research-in-sleep (ARIS)
+# Contributing to CatfishResearch
 
 [English](CONTRIBUTING.md) | [中文版](CONTRIBUTING_CN.md)
 
-Thank you for your interest in contributing to ARIS! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to CatfishResearch. This repository preserves the upstream ARIS workflow lineage and the Codex-first fork history, so contributions should keep provenance explicit when updating top-level docs, `docs/catfish/`, or fork-specific execution notes.
 
 ## Ways to Contribute
 
@@ -17,8 +17,8 @@ Thank you for your interest in contributing to ARIS! This document provides guid
 1. Fork the repository
 2. Clone your fork:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/Auto-claude-code-research-in-sleep.git
-   cd Auto-claude-code-research-in-sleep
+   git clone https://github.com/YOUR_USERNAME/YOUR_FORK.git
+   cd YOUR_FORK
    ```
 3. Create a branch for your changes:
    ```bash
@@ -58,7 +58,7 @@ Before submitting:
 ## Pull Request Process
 
 1. Make sure your changes are well-documented
-2. Update README.md if you add new skills or features
+2. Update `README.md` or `docs/catfish/` if you add Catfish-facing docs, naming, or feature surfaces
 3. Keep PRs focused on a single change
 4. Write clear commit messages
 

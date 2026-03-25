@@ -1,8 +1,8 @@
-# 为 Auto-claude-code-research-in-sleep (ARIS) 做贡献
+# 为 CatfishResearch 做贡献
 
 [English](CONTRIBUTING.md) | 中文版
 
-感谢你对 ARIS 项目的关注！本文档提供了参与贡献的指南和说明。
+感谢你对 CatfishResearch 的关注。这个仓库保留 upstream ARIS 工作流血统和 Codex-first fork 历史，因此在更新顶层文档、`docs/catfish/` 或分支特有执行说明时，请显式保留 provenance。
 
 ## 贡献方式
 
@@ -17,8 +17,8 @@
 1. Fork 本仓库
 2. 克隆你的 Fork：
    ```bash
-   git clone https://github.com/你的用户名/Auto-claude-code-research-in-sleep.git
-   cd Auto-claude-code-research-in-sleep
+   git clone https://github.com/你的用户名/你的Fork.git
+   cd 你的Fork
    ```
 3. 为你的更改创建分支：
    ```bash
@@ -58,7 +58,7 @@ allowed-tools: Read, Write, Bash(*)
 ## Pull Request 流程
 
 1. 确保你的更改有完善的文档说明
-2. 如果添加了新的 Skill 或功能，请更新 README.md
+2. 如果新增 Catfish-facing 文档、命名或功能入口，请同步更新 `README.md` 或 `docs/catfish/`
 3. 保持 PR 聚焦于单一更改
 4. 编写清晰的提交信息
 
