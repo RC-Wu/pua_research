@@ -216,7 +216,7 @@ def install_candidate(
     candidate = next((item for item in candidates if item.candidate_id == candidate_id), None)
     if candidate is None:
         raise ValueError(f"Unknown candidate_id: {candidate_id}")
-    if candidate.decision not in {"attempt-install", "attempt-convert-to-skill", "queue-for-review"}:
+    if candidate.decision not in {"attempt-install", "attempt-convert-to-skill"}:
         raise ValueError(f"Candidate {candidate_id} is not eligible for installation: {candidate.decision}")
 
     scratch_root.mkdir(parents=True, exist_ok=True)
@@ -308,7 +308,7 @@ def write_install_report(state_root: Path, install: MaterializedInstall) -> None
 def _summarize_candidates(candidates: list[ModuleScoutCandidate]) -> dict[str, Any]:
     if not candidates:
         return {"summary_line": "No module-scout candidates available.", "eligible": 0, "blocked": 0}
-    eligible = [candidate for candidate in candidates if candidate.decision in {"attempt-install", "attempt-convert-to-skill", "queue-for-review"}]
+    eligible = [candidate for candidate in candidates if candidate.decision in {"attempt-install", "attempt-convert-to-skill"}]
     blocked = [candidate for candidate in candidates if candidate.decision == "reject"]
     top = candidates[0]
     return {

@@ -91,6 +91,69 @@ class ProviderModuleToolTests(unittest.TestCase):
             self.assertTrue((Path(install.install_root) / "skill" / "SKILL.md").exists())
             self.assertTrue((Path(install.install_root) / "install_plan.json").exists())
 
+    def test_module_scout_requires_review_before_installing_queued_candidate(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            state_root = Path(tmp) / "state-root"
+            system_root = state_root / "system"
+            system_root.mkdir(parents=True, exist_ok=True)
+            allowlist_path = WORKTREE_ROOT / "assets" / "external_repos" / "catfish_module_scout_manifest.example.json"
+            scout_state = {
+                "module_scout_contracts": [
+                    {
+                        "contract_id": "scout-contract-implementation",
+                        "module_id": "scheduler/implementation-builder",
+                        "module_label": "Implementation Builder",
+                        "capability": "implementation",
+                        "allowlist_manifest": "assets/external_repos/catfish_module_scout_manifest.example.json",
+                        "allowed_source_ids": ["promptfoo"],
+                        "safe_install_modes": ["clone-reference", "convert-to-skill"],
+                        "max_candidates": 4,
+                        "require_explicit_allowlist": True,
+                        "require_human_review": True,
+                        "created_at": "2026-03-28T09:58:00Z",
+                        "summary": "Only allowlisted modules may move from scouting into trial installation.",
+                    }
+                ],
+                "module_scout_candidates": [
+                    {
+                        "candidate_id": "candidate:promptfoo",
+                        "contract_id": "scout-contract-implementation",
+                        "source_kind": "repo",
+                        "source_id": "promptfoo",
+                        "title": "promptfoo",
+                        "capability": "implementation",
+                        "source_url": "https://github.com/promptfoo/promptfoo",
+                        "install_policy": "clone-reference",
+                        "conversion_target": "skill",
+                        "summary": "Useful but still needs explicit review.",
+                        "metadata": {
+                            "novelty_score": 0.55,
+                            "quality_score": 0.55,
+                            "fit_score": 0.55,
+                            "operational_score": 0.55,
+                        },
+                    }
+                ],
+            }
+            (system_root / "self_optimization.json").write_text(
+                json.dumps(scout_state, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+
+            report = build_scan_report(state_root, allowlist_path)
+            self.assertEqual(report["candidates"][0]["decision"], "queue-for-review")
+            self.assertEqual(report["summary"]["eligible"], 0)
+
+            with self.assertRaisesRegex(ValueError, "not eligible for installation"):
+                install_candidate(
+                    state_root,
+                    allowlist_path,
+                    "candidate:promptfoo",
+                    Path(tmp) / "scratch",
+                    allow_network=False,
+                    materialize_skill=True,
+                )
+
 
 if __name__ == "__main__":
     unittest.main()
