@@ -244,6 +244,79 @@ def render_recent_events(snapshot: ControlSnapshot, limit: int = 8) -> list[str]
     return lines
 
 
+def render_guardrails(snapshot: ControlSnapshot) -> list[str]:
+    if snapshot.guardrail_state is None:
+        return ["- no runtime guardrail state"]
+
+    state = snapshot.guardrail_state
+    lines = [
+        "- "
+        f"status={state.overall_status} "
+        f"observed_at={state.observed_at or 'n/a'} "
+        f"manager={state.manager_id or 'n/a'}"
+    ]
+    for policy in state.policies:
+        limit = _format_metric(policy.limit, policy.unit)
+        warn_at = _format_metric(policy.warn_at, policy.unit)
+        lines.append(
+            "  "
+            f"* policy={policy.policy_id} "
+            f"category={policy.category} "
+            f"limit={limit} "
+            f"warn={warn_at} "
+            f"owner={policy.owner or 'n/a'} "
+            f"scope={policy.scope or 'n/a'}"
+        )
+    for check in state.checks:
+        lines.append(
+            "  "
+            f"* check={check.policy_id} "
+            f"[{check.status}/{check.severity}] "
+            f"observed={_format_metric(check.observed, check.unit)} "
+            f"limit={_format_metric(check.limit, check.unit)} "
+            f"blocking={'yes' if check.blocking else 'no'}"
+        )
+        lines.append(f"    summary: {check.summary}")
+        if check.action_script:
+            lines.append(f"    action_script: {check.action_script}")
+    return lines
+
+
+def render_supervisor_state(snapshot: ControlSnapshot) -> list[str]:
+    if snapshot.supervisor_state is None:
+        return ["- no supervisor state"]
+
+    state = snapshot.supervisor_state
+    lines = [
+        "- "
+        f"status={state.overall_status} "
+        f"observed_at={state.observed_at or 'n/a'} "
+        f"restart_intent={state.restart_intent} "
+        f"restart_allowed={state.restart_allowed} "
+        f"recent_restarts={state.recent_restart_count}/{state.max_restarts_per_window} "
+        f"window={state.restart_window_seconds}s"
+    ]
+    if state.restart_reason:
+        lines.append(f"  reason: {state.restart_reason}")
+    if state.restart_command:
+        lines.append(f"  restart_command: {state.restart_command}")
+    if state.cooldown_until:
+        lines.append(f"  cooldown_until: {state.cooldown_until}")
+    for component in state.components:
+        lines.append(
+            "  "
+            f"* {component.component_id} "
+            f"role={component.role or 'n/a'} "
+            f"status={component.status} "
+            f"stall={component.stall_seconds}s/{component.stall_threshold_seconds}s "
+            f"heartbeat={component.last_heartbeat_at or 'n/a'} "
+            f"progress={component.last_progress_at or 'n/a'}"
+        )
+        if component.summary:
+            lines.append(f"    summary: {component.summary}")
+    return lines
+
+
 def render_route_preview(snapshot: ControlSnapshot) -> list[str]:
     if not snapshot.route_preview:
         return ["- no live route preview"]
@@ -281,6 +354,10 @@ def view_to_dict(snapshot: ControlSnapshot, view: str, event_limit: int = 8) -> 
                 serializer=lambda item: item.to_dict(),
             )
         }
+    if view == "guardrails":
+        return {"guardrail_state": snapshot.guardrail_state.to_dict() if snapshot.guardrail_state else None}
+    if view == "supervisor":
+        return {"supervisor_state": snapshot.supervisor_state.to_dict() if snapshot.supervisor_state else None}
     if view == "pending-reviews":
         return {"pending_reviews": _section_payload(snapshot.pending_reviews, serializer=lambda item: item.to_dict())}
     if view == "provider-status":
@@ -307,6 +384,8 @@ def render_view(snapshot: ControlSnapshot, view: str, event_limit: int = 8) -> s
     renderers: dict[str, Callable[[ControlSnapshot], list[str]]] = {
         "projects": render_multi_project_overview,
         "stage-competitions": render_stage_competitions,
+        "guardrails": render_guardrails,
+        "supervisor": render_supervisor_state,
         "pending-reviews": render_pending_reviews,
         "provider-status": render_provider_health,
         "recent-launches": lambda item: render_recent_launches(item, limit=event_limit),
@@ -317,6 +396,8 @@ def render_view(snapshot: ControlSnapshot, view: str, event_limit: int = 8) -> s
     titles = {
         "projects": "Projects",
         "stage-competitions": "Stage Competitions",
+        "guardrails": "Runtime Guardrails",
+        "supervisor": "Supervisor State",
         "pending-reviews": "Pending Reviews",
         "provider-status": "Provider Status",
         "recent-launches": "Recent Launches",
@@ -335,6 +416,8 @@ def render_dashboard(snapshot: ControlSnapshot, event_limit: int = 8) -> str:
     sections = [
         f"Catfish Control Center Snapshot @ {snapshot.generated_at or 'unknown'}",
         _section("Route Preview", render_route_preview(snapshot)),
+        _section("Runtime Guardrails", render_guardrails(snapshot)),
+        _section("Supervisor State", render_supervisor_state(snapshot)),
         _section("Projects", render_multi_project_overview(snapshot)),
         _section("Agent Graph / Hierarchy", render_agent_graph(snapshot)),
         _section("Provider Status", render_provider_health(snapshot)),
@@ -347,3 +430,19 @@ def render_dashboard(snapshot: ControlSnapshot, event_limit: int = 8) -> str:
         _section("Recent Events", render_recent_events(snapshot, limit=event_limit)),
     ]
     return "\n\n".join(sections)
+
+
+def _format_metric(value: float, unit: str) -> str:
+    if unit == "bytes":
+        scaled = float(value)
+        for suffix in ("B", "KiB", "MiB", "GiB", "TiB"):
+            if abs(scaled) < 1024.0 or suffix == "TiB":
+                return f"{scaled:.1f} {suffix}"
+            scaled /= 1024.0
+    if unit == "percent":
+        return f"{value:.1f}%"
+    if unit == "seconds":
+        return f"{int(value)}s"
+    if unit == "count":
+        return str(int(value))
+    return f"{value:.1f}"

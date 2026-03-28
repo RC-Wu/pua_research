@@ -406,6 +406,184 @@ class DiversityMetric:
 
 
 @dataclass(frozen=True)
+class GuardrailPolicy:
+    policy_id: str
+    label: str
+    category: str
+    owner: str
+    scope: str = ""
+    limit: float = 0.0
+    warn_at: float = 0.0
+    unit: str = ""
+    action_script: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "GuardrailPolicy":
+        return cls(
+            policy_id=str(data["policy_id"]),
+            label=str(data.get("label", data["policy_id"])),
+            category=str(data.get("category", "generic")),
+            owner=str(data.get("owner", "")),
+            scope=str(data.get("scope", "")),
+            limit=_float(data.get("limit")),
+            warn_at=_float(data.get("warn_at")),
+            unit=str(data.get("unit", "")),
+            action_script=str(data.get("action_script", "")),
+            metadata=dict(data.get("metadata", {})),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class GuardrailCheck:
+    check_id: str
+    policy_id: str
+    status: str
+    severity: str
+    summary: str
+    observed: float = 0.0
+    limit: float = 0.0
+    unit: str = ""
+    blocking: bool = False
+    action_script: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "GuardrailCheck":
+        return cls(
+            check_id=str(data["check_id"]),
+            policy_id=str(data.get("policy_id", "")),
+            status=str(data.get("status", "unknown")),
+            severity=str(data.get("severity", "info")),
+            summary=str(data.get("summary", "")),
+            observed=_float(data.get("observed")),
+            limit=_float(data.get("limit")),
+            unit=str(data.get("unit", "")),
+            blocking=bool(data.get("blocking", False)),
+            action_script=str(data.get("action_script", "")),
+            metadata=dict(data.get("metadata", {})),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class GuardrailState:
+    observed_at: str
+    overall_status: str
+    manager_id: str
+    policies: tuple[GuardrailPolicy, ...] = field(default_factory=tuple)
+    checks: tuple[GuardrailCheck, ...] = field(default_factory=tuple)
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "GuardrailState":
+        return cls(
+            observed_at=str(data.get("observed_at", "")),
+            overall_status=str(data.get("overall_status", "unknown")),
+            manager_id=str(data.get("manager_id", "")),
+            policies=tuple(GuardrailPolicy.from_dict(item) for item in data.get("policies", [])),
+            checks=tuple(GuardrailCheck.from_dict(item) for item in data.get("checks", [])),
+            metadata=dict(data.get("metadata", {})),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "observed_at": self.observed_at,
+            "overall_status": self.overall_status,
+            "manager_id": self.manager_id,
+            "policies": [item.to_dict() for item in self.policies],
+            "checks": [item.to_dict() for item in self.checks],
+            "metadata": self.metadata,
+        }
+
+
+@dataclass(frozen=True)
+class SupervisorComponentState:
+    component_id: str
+    role: str
+    status: str
+    healthy: bool
+    last_heartbeat_at: str = ""
+    last_progress_at: str = ""
+    stall_seconds: int = 0
+    stall_threshold_seconds: int = 0
+    summary: str = ""
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "SupervisorComponentState":
+        return cls(
+            component_id=str(data["component_id"]),
+            role=str(data.get("role", "")),
+            status=str(data.get("status", "unknown")),
+            healthy=bool(data.get("healthy", False)),
+            last_heartbeat_at=str(data.get("last_heartbeat_at", "")),
+            last_progress_at=str(data.get("last_progress_at", "")),
+            stall_seconds=_int(data.get("stall_seconds")),
+            stall_threshold_seconds=_int(data.get("stall_threshold_seconds")),
+            summary=str(data.get("summary", "")),
+            metadata=dict(data.get("metadata", {})),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class SupervisorState:
+    observed_at: str
+    overall_status: str
+    restart_intent: str
+    restart_allowed: bool
+    restart_reason: str = ""
+    restart_command: str = ""
+    cooldown_until: str = ""
+    max_restarts_per_window: int = 0
+    restart_window_seconds: int = 0
+    recent_restart_count: int = 0
+    components: tuple[SupervisorComponentState, ...] = field(default_factory=tuple)
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "SupervisorState":
+        return cls(
+            observed_at=str(data.get("observed_at", "")),
+            overall_status=str(data.get("overall_status", "unknown")),
+            restart_intent=str(data.get("restart_intent", "none")),
+            restart_allowed=bool(data.get("restart_allowed", False)),
+            restart_reason=str(data.get("restart_reason", "")),
+            restart_command=str(data.get("restart_command", "")),
+            cooldown_until=str(data.get("cooldown_until", "")),
+            max_restarts_per_window=_int(data.get("max_restarts_per_window")),
+            restart_window_seconds=_int(data.get("restart_window_seconds")),
+            recent_restart_count=_int(data.get("recent_restart_count")),
+            components=tuple(SupervisorComponentState.from_dict(item) for item in data.get("components", [])),
+            metadata=dict(data.get("metadata", {})),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "observed_at": self.observed_at,
+            "overall_status": self.overall_status,
+            "restart_intent": self.restart_intent,
+            "restart_allowed": self.restart_allowed,
+            "restart_reason": self.restart_reason,
+            "restart_command": self.restart_command,
+            "cooldown_until": self.cooldown_until,
+            "max_restarts_per_window": self.max_restarts_per_window,
+            "restart_window_seconds": self.restart_window_seconds,
+            "recent_restart_count": self.recent_restart_count,
+            "components": [item.to_dict() for item in self.components],
+            "metadata": self.metadata,
+        }
+
+
+@dataclass(frozen=True)
 class ControlSnapshot:
     generated_at: str
     projects: tuple[ProjectState, ...]
@@ -418,6 +596,8 @@ class ControlSnapshot:
     launches: tuple[LaunchRecord, ...] = field(default_factory=tuple)
     capability_summaries: tuple[CapabilitySummaryState, ...] = field(default_factory=tuple)
     diversity_metrics: tuple[DiversityMetric, ...] = field(default_factory=tuple)
+    guardrail_state: GuardrailState | None = None
+    supervisor_state: SupervisorState | None = None
     route_preview: dict[str, Any] | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -439,6 +619,8 @@ class ControlSnapshot:
                 CapabilitySummaryState.from_dict(item) for item in data.get("capability_summaries", [])
             ),
             diversity_metrics=tuple(DiversityMetric.from_dict(item) for item in data.get("diversity_metrics", [])),
+            guardrail_state=GuardrailState.from_dict(data["guardrail_state"]) if data.get("guardrail_state") else None,
+            supervisor_state=SupervisorState.from_dict(data["supervisor_state"]) if data.get("supervisor_state") else None,
             route_preview=dict(data["route_preview"]) if data.get("route_preview") else None,
             metadata=dict(data.get("metadata", {})),
         )
@@ -456,6 +638,8 @@ class ControlSnapshot:
             "launches": [item.to_dict() for item in self.launches],
             "capability_summaries": [item.to_dict() for item in self.capability_summaries],
             "diversity_metrics": [item.to_dict() for item in self.diversity_metrics],
+            "guardrail_state": self.guardrail_state.to_dict() if self.guardrail_state else None,
+            "supervisor_state": self.supervisor_state.to_dict() if self.supervisor_state else None,
             "route_preview": self.route_preview,
             "metadata": self.metadata,
         }

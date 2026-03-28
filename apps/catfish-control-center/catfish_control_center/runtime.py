@@ -7,6 +7,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
+from .guardrails import build_guardrail_state
 from .models import (
     AgentNode,
     BranchScore,
@@ -14,13 +15,16 @@ from .models import (
     ControlEvent,
     ControlSnapshot,
     DiversityMetric,
+    GuardrailState,
     LaunchRecord,
     ProjectState,
     ProviderState,
     ReviewTask,
     StageCompetition,
+    SupervisorState,
 )
 from .storage import JsonSnapshotStore
+from .supervisor import build_supervisor_state
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -28,6 +32,7 @@ ROUTE_PREVIEW_PATH = REPO_ROOT / "tools" / "codex_route_preview.py"
 DEFAULT_PROVIDER_REGISTRY_PATH = REPO_ROOT / "assets" / "router" / "catfish_provider_registry.json"
 DEFAULT_PROVIDER_HEALTH_PATH = REPO_ROOT / "assets" / "router" / "catfish_provider_health_20260325.json"
 DEFAULT_CAPABILITY_LEDGER_PATH = REPO_ROOT / "assets" / "router" / "catfish_capability_ledger.json"
+DEFAULT_GUARDRAIL_POLICY_PATH = REPO_ROOT / "assets" / "catfish_policy" / "catfish_runtime_guardrail.example.json"
 
 
 def load_snapshot(snapshot_path: Path) -> ControlSnapshot:
@@ -53,6 +58,14 @@ def load_live_state(state_root: Path) -> ControlSnapshot:
         system_root / "capability_ledger.json",
         default=_load_optional_json(DEFAULT_CAPABILITY_LEDGER_PATH, default={}),
     )
+    runtime_policy = _load_optional_json(
+        system_root / "catfish_runtime_policy.json",
+        default=_load_optional_json(DEFAULT_GUARDRAIL_POLICY_PATH, default={}),
+    )
+    runtime_metrics = _load_optional_json(system_root / "runtime_metrics.json", default={})
+    resource_manager_state = _load_optional_json(system_root / "resource_manager_state.json", default={})
+    agentdoc_state = _load_optional_json(system_root / "agentdoc_state.json", default={})
+    supervisor_state_payload = _load_optional_json(system_root / "supervisor_state.json", default={})
 
     project_dirs = sorted(
         [path for path in projects_root.iterdir() if path.is_dir()],
@@ -188,6 +201,18 @@ def load_live_state(state_root: Path) -> ControlSnapshot:
         provider_health.get("observedAt"),
         capability_ledger.get("updatedAt"),
     )
+    guardrail_state: GuardrailState | None = build_guardrail_state(
+        policy_payload=runtime_policy,
+        runtime_metrics=runtime_metrics,
+        resource_manager_state=resource_manager_state,
+        agentdoc_state=agentdoc_state,
+        agents=agents,
+    )
+    supervisor_state: SupervisorState | None = build_supervisor_state(
+        policy_payload=runtime_policy,
+        supervisor_payload=supervisor_state_payload,
+        guardrail_state=guardrail_state,
+    )
     metadata = {
         "source": "state-root",
         "state_root": str(state_root),
@@ -195,10 +220,24 @@ def load_live_state(state_root: Path) -> ControlSnapshot:
             "scheduler_state": str(system_root / "scheduler_state.json"),
             "dispatch_queue": str(system_root / "dispatch_queue.json"),
             "review_queue": str(system_root / "review_queue.json"),
+            "runtime_policy": str(system_root / "catfish_runtime_policy.json"),
+            "runtime_metrics": str(system_root / "runtime_metrics.json"),
+            "resource_manager_state": str(system_root / "resource_manager_state.json"),
+            "agentdoc_state": str(system_root / "agentdoc_state.json"),
+            "supervisor_state": str(system_root / "supervisor_state.json"),
         },
     }
     if not generated_at:
-        generated_at = _max_timestamp([project.last_event_at for project in projects] + [launch.launched_at for launch in launches.values()])
+        extra_timestamps: list[str] = []
+        if guardrail_state and guardrail_state.observed_at:
+            extra_timestamps.append(guardrail_state.observed_at)
+        if supervisor_state and supervisor_state.observed_at:
+            extra_timestamps.append(supervisor_state.observed_at)
+        generated_at = _max_timestamp(
+            [project.last_event_at for project in projects]
+            + [launch.launched_at for launch in launches.values()]
+            + extra_timestamps
+        )
 
     return ControlSnapshot(
         generated_at=generated_at,
@@ -217,6 +256,8 @@ def load_live_state(state_root: Path) -> ControlSnapshot:
             )
         ),
         diversity_metrics=tuple(sorted(diversity_metrics, key=lambda item: (item.project_id, item.stage_id, item.metric_id))),
+        guardrail_state=guardrail_state,
+        supervisor_state=supervisor_state,
         metadata=metadata,
     )
 

@@ -183,6 +183,177 @@ class ControlCenterTest(unittest.TestCase):
                 ],
             },
         )
+        self._write_json(
+            system_root / "catfish_runtime_policy.json",
+            {
+                "schemaVersion": "catfish.runtime-guardrail.v1",
+                "updatedAt": "2026-03-25T12:20:00Z",
+                "resourceManager": {
+                    "managerId": "resource-manager",
+                    "ownedResourceKinds": ["gpu", "storage", "cpu"],
+                },
+                "budgets": {
+                    "rootDir": {
+                        "policyId": "root-dir-budget",
+                        "path": "/workspace/root",
+                        "maxBytes": 20 * 1024 * 1024,
+                        "warnBytes": 15 * 1024 * 1024,
+                        "actionScript": "du -sb /workspace/root",
+                    },
+                    "vePfs": {
+                        "policyId": "vepfs-budget",
+                        "path": "/dev_vepfs/task-root",
+                        "maxBytes": 50 * 1024 * 1024 * 1024,
+                        "warnBytes": 45 * 1024 * 1024 * 1024,
+                        "actionScript": "du -sb /dev_vepfs/task-root",
+                    },
+                    "cpu": {
+                        "policyId": "cpu-budget",
+                        "maxPercent": 65.0,
+                        "warnPercent": 50.0,
+                        "hostReservePercent": 35.0,
+                        "actionScript": "python -m catfish_control_center.main --view supervisor",
+                    },
+                },
+                "ownership": {
+                    "policyId": "resource-manager-ownership",
+                    "resourceKinds": ["gpu", "storage", "cpu"],
+                    "actionScript": "python -m catfish_control_center.main --view guardrails --format json",
+                },
+                "gpu": {
+                    "policyId": "gpu-manager-only",
+                    "maxSimultaneousOwners": 1,
+                    "warnSimultaneousOwners": 1,
+                    "actionScript": "python -m catfish_control_center.main --view guardrails",
+                },
+                "agentDoc": {
+                    "policyId": "agentdoc-heartbeat",
+                    "requiredCadenceSeconds": 900,
+                    "warnCadenceSeconds": 600,
+                    "actionScript": "python -m catfish_control_center.main --view recent-events",
+                },
+                "supervisor": {
+                    "workerStallSeconds": 600,
+                    "schedulerStallSeconds": 900,
+                    "restartCooldownSeconds": 900,
+                    "maxRestartsPerWindow": 2,
+                    "restartWindowSeconds": 3600,
+                    "restartCommand": "catfish-supervisor restart --component {component}",
+                },
+            },
+        )
+        self._write_json(
+            system_root / "runtime_metrics.json",
+            {
+                "observedAt": "2026-03-25T12:20:00Z",
+                "rootDirUsageBytes": 12 * 1024 * 1024,
+                "vePfsUsageBytes": 20 * 1024 * 1024 * 1024,
+                "cpuPercent": 42.5,
+            },
+        )
+        self._write_json(
+            system_root / "resource_manager_state.json",
+            {
+                "observedAt": "2026-03-25T12:20:00Z",
+                "managerId": "resource-manager",
+                "requests": [
+                    {
+                        "requestId": "req-gpu-builder-a",
+                        "agentId": "builder-a",
+                        "resourceKind": "gpu",
+                        "status": "approved",
+                        "approvedBy": "resource-manager",
+                    },
+                    {
+                        "requestId": "req-cpu-builder-a",
+                        "agentId": "builder-a",
+                        "resourceKind": "cpu",
+                        "status": "approved",
+                        "approvedBy": "resource-manager",
+                    },
+                ],
+                "allocations": [
+                    {
+                        "allocationId": "alloc-gpu-0",
+                        "resourceKind": "gpu",
+                        "status": "active",
+                        "ownerId": "resource-manager",
+                        "leaseHolder": "builder-a",
+                    },
+                    {
+                        "allocationId": "alloc-cpu-0",
+                        "resourceKind": "cpu",
+                        "status": "active",
+                        "ownerId": "resource-manager",
+                        "leaseHolder": "builder-a",
+                        "percent": 35.0,
+                    },
+                    {
+                        "allocationId": "alloc-storage-0",
+                        "resourceKind": "storage",
+                        "status": "active",
+                        "ownerId": "resource-manager",
+                        "leaseHolder": "builder-a",
+                    },
+                ],
+            },
+        )
+        self._write_json(
+            system_root / "agentdoc_state.json",
+            {
+                "observedAt": "2026-03-25T12:20:00Z",
+                "agents": [
+                    {
+                        "agentId": "project-director",
+                        "lastAgentDocCheckAt": "2026-03-25T12:18:00Z",
+                        "lastHeartbeatAt": "2026-03-25T12:19:00Z",
+                    },
+                    {
+                        "agentId": "builder-a",
+                        "lastAgentDocCheckAt": "2026-03-25T12:13:30Z",
+                        "lastHeartbeatAt": "2026-03-25T12:18:30Z",
+                    },
+                    {
+                        "agentId": "builder-b",
+                        "lastAgentDocCheckAt": "2026-03-25T12:14:00Z",
+                        "lastHeartbeatAt": "2026-03-25T12:18:20Z",
+                    },
+                    {
+                        "agentId": "figure-a",
+                        "lastAgentDocCheckAt": "2026-03-25T12:16:00Z",
+                        "lastHeartbeatAt": "2026-03-25T12:18:00Z",
+                    },
+                    {
+                        "agentId": "figure-b",
+                        "lastAgentDocCheckAt": "2026-03-25T12:16:30Z",
+                        "lastHeartbeatAt": "2026-03-25T12:18:10Z",
+                    },
+                ],
+            },
+        )
+        self._write_json(
+            system_root / "supervisor_state.json",
+            {
+                "observedAt": "2026-03-25T12:20:00Z",
+                "components": {
+                    "catfish-worker": {
+                        "role": "worker",
+                        "status": "running",
+                        "healthy": True,
+                        "lastHeartbeatAt": "2026-03-25T12:19:40Z",
+                        "lastProgressAt": "2026-03-25T12:19:30Z",
+                    },
+                    "catfish-scheduler": {
+                        "role": "scheduler",
+                        "status": "running",
+                        "healthy": True,
+                        "lastHeartbeatAt": "2026-03-25T12:19:50Z",
+                        "lastProgressAt": "2026-03-25T12:19:45Z",
+                    },
+                },
+                "restartHistory": [],
+            },
+        )
 
         project_root = projects_root / "proj-alpha"
         self._write_json(
@@ -476,6 +647,8 @@ class ControlCenterTest(unittest.TestCase):
         self.assertIn("Catfish Control Center Snapshot", rendered)
         self.assertIn("Projects", rendered)
         self.assertIn("Agent Graph / Hierarchy", rendered)
+        self.assertIn("Runtime Guardrails", rendered)
+        self.assertIn("Supervisor State", rendered)
         self.assertIn("Provider Status", rendered)
         self.assertIn("Branch Scoreboards", rendered)
         self.assertIn("Route Preview", rendered)
@@ -501,6 +674,10 @@ class ControlCenterTest(unittest.TestCase):
         self.assertTrue(any(item.capability == "implementation" for item in snapshot.capability_summaries))
         self.assertTrue(any(item.source_kind == "provider" for item in snapshot.capability_summaries))
         self.assertEqual(len(snapshot.diversity_metrics), 2)
+        self.assertIsNotNone(snapshot.guardrail_state)
+        self.assertEqual(snapshot.guardrail_state.overall_status, "ok")
+        self.assertIsNotNone(snapshot.supervisor_state)
+        self.assertEqual(snapshot.supervisor_state.overall_status, "healthy")
 
         provider_states = {item.profile_id: item for item in snapshot.providers}
         self.assertTrue(provider_states["ucloud-modelverse"].available)
@@ -522,6 +699,11 @@ class ControlCenterTest(unittest.TestCase):
         figure_metric = next(item for item in diversity_payload["diversity_metrics"] if item["stage_id"] == "figure")
         self.assertEqual(figure_metric["unique_models"], 2)
         self.assertGreaterEqual(figure_metric["wildcard_count"], 1)
+
+        guardrail_payload = view_to_dict(snapshot, "guardrails")
+        self.assertEqual(guardrail_payload["guardrail_state"]["overall_status"], "ok")
+        supervisor_view = render_view(snapshot, "supervisor")
+        self.assertIn("restart_intent=none", supervisor_view)
 
     def test_cli_accepts_state_root_and_view(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -13,6 +13,8 @@ VIEW_CHOICES = (
     "dashboard",
     "projects",
     "stage-competitions",
+    "guardrails",
+    "supervisor",
     "pending-reviews",
     "provider-status",
     "recent-launches",

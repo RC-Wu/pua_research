@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "catfish.runtime-guardrail.v1",
+  "updatedAt": "2026-03-28T00:00:00Z",
+  "resourceManager": {
+    "managerId": "resource-manager",
+    "ownedResourceKinds": [
+      "gpu",
+      "storage",
+      "cpu"
+    ]
+  },
+  "budgets": {
+    "rootDir": {
+      "policyId": "root-dir-budget",
+      "label": "Root Directory Budget",
+      "path": "/workspace/root",
+      "maxBytes": 20971520,
+      "warnBytes": 15728640,
+      "actionScript": "du -sb /workspace/root"
+    },
+    "vePfs": {
+      "policyId": "vepfs-budget",
+      "label": "vePFS Task Budget",
+      "path": "/dev_vepfs/task-root",
+      "maxBytes": 53687091200,
+      "warnBytes": 48318382080,
+      "actionScript": "du -sb /dev_vepfs/task-root"
+    },
+    "cpu": {
+      "policyId": "cpu-budget",
+      "label": "CPU Availability Budget",
+      "maxPercent": 65.0,
+      "warnPercent": 50.0,
+      "hostReservePercent": 35.0,
+      "actionScript": "python -m catfish_control_center.main --state-root \"$STATE_ROOT\" --view supervisor"
+    }
+  },
+  "ownership": {
+    "policyId": "resource-manager-ownership",
+    "label": "Manager-Only Resource Ownership",
+    "resourceKinds": [
+      "gpu",
+      "storage",
+      "cpu"
+    ],
+    "actionScript": "python -m catfish_control_center.main --state-root \"$STATE_ROOT\" --view guardrails --format json"
+  },
+  "gpu": {
+    "policyId": "gpu-manager-only",
+    "label": "GPU Manager Ownership Cap",
+    "maxSimultaneousOwners": 1,
+    "warnSimultaneousOwners": 1,
+    "actionScript": "python -m catfish_control_center.main --state-root \"$STATE_ROOT\" --view guardrails"
+  },
+  "agentDoc": {
+    "policyId": "agentdoc-heartbeat",
+    "label": "AgentDoc Heartbeat Cadence",
+    "requiredCadenceSeconds": 900,
+    "warnCadenceSeconds": 600,
+    "actionScript": "python -m catfish_control_center.main --state-root \"$STATE_ROOT\" --view recent-events"
+  },
+  "supervisor": {
+    "workerStallSeconds": 600,
+    "schedulerStallSeconds": 900,
+    "restartCooldownSeconds": 900,
+    "maxRestartsPerWindow": 2,
+    "restartWindowSeconds": 3600,
+    "restartCommand": "catfish-supervisor restart --component {component}"
+  }
+}
